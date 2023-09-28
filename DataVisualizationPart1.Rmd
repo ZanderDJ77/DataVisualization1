@@ -5,8 +5,187 @@ output: github_document
 
 Initial Libraries
 ```{r}
+library(tidyverse)
+library(ggridges)
+
+#Global Markdown Knitting Settings
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+```
+
+Importing Data from NOAA Online Server
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USW00022534", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2021-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USW00022534 = "Molokai_HI",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) |>
+  select(name, id, everything())
+
+weather_df
+```
+
+# Making a Plot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + geom_point()
 
 ```
 
+Identifying it through Piping
 
-Importing Data from NOAA
+```{r}
+weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+ggp_nyc_weather = 
+  weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+
+ggp_nyc_weather
+
+```
+
+# Editing Plots and Aesthetic Mapping
+
+```{r}
+ggplot(weather_df, aes(x= tmin, y = tmax)) + 
+  geom_point(aes(color = name)) +
+  geom_smooth(se = FALSE)
+
+#color maps onto points, smooth creates a curve to plot into the line
+```
+
+Plot with Facets 
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y= tmax, color = name)) +
+  geom_point(alpha = .3) + 
+  geom_smooth() +
+  facet_grid(. ~ name)
+
+```
+
+New Plot 
+
+```{r}
+ggplot(weather_df, aes(x= date, y = tmax, color = name)) +
+  geom_point(aes(size = prcp), alpha = .3) +
+  geom_smooth() +
+  facet_grid(. ~ name)
+```
+
+Try assigning a specific color
+
+```{r}
+weather_df |> 
+  filter(name != "CentralPark_NY") |> 
+  ggplot(aes(x= date, y = tmax, color = name)) +
+  geom_point(alpha = .7, size = .5)
+
+
+```
+
+If you want to assign color, best to put it in the geom_point for a particular trend curve
+Easiest to filter trend of interest ahead of time
+
+```{r}
+weather_df |> 
+  filter(name == "CentralPark_NY") |> 
+  ggplot(aes(x= date, y = tmax)) +
+  geom_point(alpha = .7, size = .5, color = "blue")
+```
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_hex()
+```
+
+```{r}
+weather_df |> 
+  filter(name == "Molokai_HI") |> 
+  ggplot(aes(x = date, y = tmax)) +
+  geom_line(alpha = 0.5, color = "green") +
+  geom_point(size = 0.5)
+```
+
+
+## Univariate Plotting
+
+Histogram
+
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) +
+  geom_histogram(position = "dodge")
+
+# with these specifications on position not very readable
+```
+
+Let's use a density plot
+
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) +
+  geom_density(alpha = .3, adjust = 0.7)
+```
+
+Using Boxplots
+
+```{r}
+ggplot(weather_df, aes(y = tmax, x = name)) + 
+  geom_boxplot()
+```
+
+Violin Plot
+```{r}
+ggplot(weather_df, aes(y = tmax, x = name, fill = name)) + 
+  geom_violin()
+```
+
+Ridge Plot
+```{r}
+ggplot(weather_df, aes(x = tmax, y = name)) +
+  geom_density_ridges()
+
+```
+
+# Saving and Embedding Plots
+Setting a folder directory ahead of time in repositor
+
+```{r}
+ggp_weather = 
+  weather_df |> 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+
+ggp_weather
+
+ggsave("Results/ggp_weather.pdf", ggp_weather)
+```
+
+Resizing a figure within specific code chunk for embedding in Markdown File
+```{r, fig.width = 12, fig.height = 12}
+ggp_weather
+```
+
+```{r, fig.width = 6, fig.asp = .6}
+ggp_weather
+```
+
