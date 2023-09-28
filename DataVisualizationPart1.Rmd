@@ -1,0 +1,12 @@
+---
+title: "Data Visualization Part 1"
+output: github_document
+---
+
+Initial Libraries
+```{r}
+
+```
+
+
+Importing Data from NOAA
