@@ -7,6 +7,7 @@ Initial Libraries
 ```{r}
 library(tidyverse)
 library(ggridges)
+library(patchwork)
 
 #Global Markdown Knitting Settings
 knitr::opts_chunk$set(
@@ -96,4 +97,130 @@ weather_df |>
   theme(legend.position = "bottom") 
 
 ```
+
+## Data Argument
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = date, y = tmax)) + 
+  geom_point(aes(color = name)) +
+  geom_smooth()
+
+nyc_weather_df =
+  weather_df |> 
+  filter(name == "CentralPark_NY")
+
+hawaii_weather_df =
+  weather_df |> 
+  filter(name == "Molokai_HI")
+
+ggplot(nyc_weather_df, aes(x = date, y = tmax, color = name)) +
+  geom_point() + 
+  geom_line(data = hawaii_weather_df)
+
+```
+
+## `Patchwork`
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  facet_grid(. ~ name)
+  
+```
+
+
+
+```{r}
+ggp_temp_scatter = 
+  weather_df |> 
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.5) +
+  theme(legend.position = "none")
+
+ggp_prcp_density = 
+  weather_df |> 
+  filter(prcp > 25) |> 
+  ggplot(aes(x=prcp, fill = name)) + geom_density(alpha = .5) +
+  theme(legend.position = "bottom")
+
+(ggp_temp_scatter + ggp_prcp_density)
+#these only work if you add in the Patchwork Library
+```
+
+```{r, Redo with Course Code}
+tmax_tmin_p = 
+  weather_df |> 
+  ggplot(aes(x = tmax, y = tmin, color = name)) + 
+  geom_point(alpha = .5) +
+  theme(legend.position = "none")
+
+prcp_dens_p = 
+  weather_df |> 
+  filter(prcp > 0) |> 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = 
+  weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
+
+(tmax_tmin_p + prcp_dens_p) / tmax_date_p
+```
+
+
+## Data Manipulation 
+
+```{r}
+weather_df |> 
+  mutate(
+    name = fct_relevel(name, c("Molokai_HI", "CentralPark_NY", "Waterhole_WA"))
+  ) |> 
+  ggplot(aes(x = name, y = tmax)) +
+  geom_boxplot()
+
+weather_df |> 
+  mutate(
+    name = fct_reorder(name, tmax)
+  ) |> 
+  ggplot(aes(x = name, y = tmax, fill = name)) + 
+  geom_violin()
+```
+
+
+
+## Complicate FAS Plot
+
+```{r}
+litters_df = 
+  read_csv("Data/FAS_litters.csv") |> 
+  janitor::clean_names() |> 
+  separate(group, into = c("dose", "day_of_tx"), sep = 3)
+
+pups_df = 
+  read_csv("Data/FAS_pups.csv") |> 
+  janitor::clean_names()
+
+fas_df = 
+  left_join(pups_df, litters_df, by = "litter_number")
+
+fas_df |> 
+  select(dose, day_of_tx, starts_with("pd")) |> 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome",
+    values_to = "pn_day"
+  ) |> 
+  ggplot(aes(x = dose, y = pn_day)) +
+  geom_violin() +
+  facet_grid(day_of_tx ~ outcome)
+```
+
+
+
 
