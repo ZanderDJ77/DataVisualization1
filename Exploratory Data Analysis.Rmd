@@ -64,3 +64,69 @@ weather_df |>
 
 ```
 
+## Grouping by name
+```{r}
+weather_df |> 
+  group_by(name, month)
+```
+
+## Counting
+
+```{r}
+weather_df |> 
+  group_by(name, month) |> 
+  summarize(n_obs = n())
+
+weather_df |> 
+  group_by(month) |> 
+  summarize(n_obs = n())
+```
+
+```{r}
+weather_df |> 
+  count(name, name = "n_obs")
+```
+
+```{r}
+weather_df |> 
+  count(name, month) |> 
+  pivot_wider(
+    names_from = name, 
+    values_from = n
+  )
+
+```
+
+## General Summaries
+*Topnotch content right here for stats dontcha know*
+
+```{r}
+weather_df |> 
+  group_by(name, month) |> 
+  summarize (
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    median_tmax = median(tmax, na.rm = TRUE),
+    sd_tmax = sd(tmax, na.rm = TRUE)
+  )
+```
+
+```{r}
+weather_df |> 
+  group_by(name, month) |> 
+  summarize(mean_tmax = mean(tmax, na.rm = TRUE)) |> 
+  ggplot(aes(x = month, y = mean_tmax, color = name)) +
+  geom_point() +
+  geom_line()
+```
+
+```{r}
+weather_df |> 
+  group_by(name, month) |> 
+  summarize(mean_tmax = mean(tmax, na.rm = TRUE)) |> 
+  pivot_wider(
+    names_from = name, 
+    values_from = mean_tmax
+  ) |> 
+  knitr::kable(digits = 2)
+```
+
