@@ -33,7 +33,8 @@ weather_df =
       USW00022534 = "Molokai_HI",
       USS0023B17S = "Waterhole_WA"),
     tmin = tmin / 10,
-    tmax = tmax / 10) |>
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) |>
   select(name, id, everything())
 
 weather_df
